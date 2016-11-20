@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 public class EventManager : MonoBehaviour{
 	public delegate bool EventDelegate(GameEvent eventInstance);
-	Dictionary<System.Type,EventDelegate> _delegateDictionary;
-	HashSet<EventDelegate> _delegateSet;
+	private Dictionary<System.Type,EventDelegate> _delegateDictionary;
+	private Queue _eventQueue;
 
 	private static EventManager _eventManager;
 
@@ -26,29 +26,21 @@ public class EventManager : MonoBehaviour{
 	void Init(){
 		Debug.Log ("Event manager is initialized.");
 		_delegateDictionary = new Dictionary<System.Type, EventDelegate>();
-		_delegateSet = new HashSet<EventDelegate>();
+		_eventQueue = new Queue ();
 	}
 
 	public bool AddDelegate<T>(EventDelegate delegateInstance) where T:GameEvent{
-		if (_delegateSet.Contains (delegateInstance)) {
-			return false;
-		}
-
 		EventDelegate existedDelegates;
 		if(_delegateDictionary.TryGetValue(typeof(T),out existedDelegates)){
 			existedDelegates += delegateInstance;
 		} else {
 			_delegateDictionary [typeof(T)] = delegateInstance;
 		}
-		_delegateSet.Add (delegateInstance);
 
 		return true;
 	}
 
 	public bool RemoveDelegate<T> (EventDelegate delegateInstance) where T:GameEvent{
-		if (!_delegateSet.Contains (delegateInstance)) {
-			return true;
-		}
 		EventDelegate existedDelegates;
 		if(_delegateDictionary.TryGetValue(typeof(T),out existedDelegates)){
 			existedDelegates -= delegateInstance;
@@ -57,7 +49,6 @@ public class EventManager : MonoBehaviour{
 			} else {
 				_delegateDictionary.Remove (typeof(T));
 			}
-			_delegateSet.Remove (delegateInstance);
 		} else {
 			Debug.LogError ("Error in RemoveDelegate.");
 		}
@@ -66,6 +57,7 @@ public class EventManager : MonoBehaviour{
 	}
 
 	public bool TriggerEvent(GameEvent eventInstance){
+		Debug.Log ("Trigger event:" + eventInstance.GetType ());
 		EventDelegate existedDelegates;
 		if(_delegateDictionary.TryGetValue(eventInstance.GetType(),out existedDelegates)){
 			existedDelegates.Invoke (eventInstance);
@@ -73,14 +65,25 @@ public class EventManager : MonoBehaviour{
 		return false;
 	}
 
+	public void QueueEvent(GameEvent eventInstance){
+		Debug.Log ("Queue event:" + eventInstance.GetType ());
+		_eventQueue.Enqueue (eventInstance);
+	}
+
 	// Use this for initialization
 	void Start (){
 	
 	}
+
+	void OnDisable() {
+	}
 	
 	// Update is called once per frame
 	void Update (){
-	
+		while(_eventQueue.Count > 0){
+			GameEvent eventInstance = _eventQueue.Dequeue () as GameEvent;
+			TriggerEvent (eventInstance);
+		}
 	}
 }
 

@@ -33,7 +33,7 @@ public class GameManager : MonoBehaviour{
 
 	// Use this for initialization
 	void Start (){
-	
+		_eventManager.QueueEvent (new GameEventStartLoading());
 	}
 	
 	// Update is called once per frame
