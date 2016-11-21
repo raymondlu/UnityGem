@@ -37,16 +37,16 @@ public class LoadingBar : MonoBehaviour {
 		InitReferences ();
 		UpdateProgress ();
 
-		EventManager.instance.AddDelegate<GameEventStartLoading> (OnGameEvent);
-		EventManager.instance.AddDelegate<GameEventUpdateLoading> (OnGameEvent);
-		EventManager.instance.AddDelegate<GameEventFinishLoading> (OnGameEvent);
+		EventManager.SafeAddDelegate<GameEventStartLoading> (OnGameEvent);
+		EventManager.SafeAddDelegate<GameEventUpdateLoading> (OnGameEvent);
+		EventManager.SafeAddDelegate<GameEventFinishLoading> (OnGameEvent);
 	}
 
 	// Use this for clean-up
 	void OnDisable() {
-		EventManager.instance.RemoveDelegate<GameEventStartLoading> (OnGameEvent);
-		EventManager.instance.RemoveDelegate<GameEventUpdateLoading> (OnGameEvent);
-		EventManager.instance.RemoveDelegate<GameEventFinishLoading> (OnGameEvent);
+		EventManager.SafeRemoveDelegate<GameEventStartLoading> (OnGameEvent);
+		EventManager.SafeRemoveDelegate<GameEventUpdateLoading> (OnGameEvent);
+		EventManager.SafeRemoveDelegate<GameEventFinishLoading> (OnGameEvent);
 	}
 
 	// Update is called once per frame
@@ -54,27 +54,24 @@ public class LoadingBar : MonoBehaviour {
 	
 	}
 
-	bool OnGameEvent(GameEvent eventInstance){
+	void OnGameEvent(GameEvent eventInstance){
 		System.Type eventType = eventInstance.GetType ();
 		if (eventType == typeof(GameEventStartLoading)) {
-			GameEventUpdateLoading e = new GameEventUpdateLoading ();
-			e.percent = 1;
-			EventManager.instance.QueueEvent (e);
+			for (int i = 1; i <= 100; ++i) {
+				GameEventUpdateLoading e = new GameEventUpdateLoading ();
+				e.percent = i;
+				EventManager.instance.QueueEvent (e);
+			}
 		} else if (eventType == typeof(GameEventUpdateLoading)) {
 			GameEventUpdateLoading currentEvent = (GameEventUpdateLoading)eventInstance;
-			if (currentEvent.percent > 100) {
+			Debug.Log ("GameEventUpdateLoading:" + currentEvent.percent);
+			if (currentEvent.percent == 100) {
 				GameEventFinishLoading e = new GameEventFinishLoading ();
 				EventManager.instance.QueueEvent (e);
-			} else {
-				GameEventUpdateLoading e = new GameEventUpdateLoading ();
-				e.percent = currentEvent.percent + 1;
-				EventManager.instance.QueueEvent (e);
-				SetPercent (currentEvent.percent);
 			}
+			SetPercent (currentEvent.percent);
 		} else if (eventType == typeof(GameEventFinishLoading)) {
 			Destroy (gameObject);
 		}
-
-		return false;
 	}
 }

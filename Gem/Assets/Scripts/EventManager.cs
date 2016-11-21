@@ -2,25 +2,24 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class EventManager : MonoBehaviour{
-	public delegate bool EventDelegate(GameEvent eventInstance);
+public class EventManager{
+	public delegate void EventDelegate(GameEvent eventInstance);
 	private Dictionary<System.Type,EventDelegate> _delegateDictionary;
 	private Queue _eventQueue;
 
-	private static EventManager _eventManager;
-
+	private static EventManager _instance;
 	public static EventManager instance{
 		get{
-			if(!_eventManager){
-				_eventManager = FindObjectOfType (typeof(EventManager)) as EventManager;
-				if(!_eventManager){
-					Debug.LogError ("Event manager is missing.");
-				} else {
-					_eventManager.Init ();
-				}
+			if(_instance == null){
+				_instance = new EventManager();
+				_instance.Init ();
 			}
-			return _eventManager;
+			return _instance;
 		}
+	}
+
+	public static void DestroyInstance(){
+		_instance = null;
 	}
 
 	void Init(){
@@ -31,7 +30,7 @@ public class EventManager : MonoBehaviour{
 
 	public bool AddDelegate<T>(EventDelegate delegateInstance) where T:GameEvent{
 		EventDelegate existedDelegates;
-		if(_delegateDictionary.TryGetValue(typeof(T),out existedDelegates)){
+		if(_instance._delegateDictionary.TryGetValue(typeof(T),out existedDelegates)){
 			existedDelegates += delegateInstance;
 		} else {
 			_delegateDictionary [typeof(T)] = delegateInstance;
@@ -40,7 +39,15 @@ public class EventManager : MonoBehaviour{
 		return true;
 	}
 
-	public bool RemoveDelegate<T> (EventDelegate delegateInstance) where T:GameEvent{
+	public static bool SafeAddDelegate<T>(EventDelegate delegateInstance) where T:GameEvent{
+		if (_instance != null) {
+			return _instance.AddDelegate<T> (delegateInstance);
+		}
+
+		return false;
+	}
+
+	public void RemoveDelegate<T> (EventDelegate delegateInstance) where T:GameEvent{
 		EventDelegate existedDelegates;
 		if(_delegateDictionary.TryGetValue(typeof(T),out existedDelegates)){
 			existedDelegates -= delegateInstance;
@@ -52,34 +59,29 @@ public class EventManager : MonoBehaviour{
 		} else {
 			Debug.LogError ("Error in RemoveDelegate.");
 		}
-
-		return true;
 	}
 
-	public bool TriggerEvent(GameEvent eventInstance){
+	public static void SafeRemoveDelegate<T> (EventDelegate delegateInstance) where T:GameEvent{
+		if (_instance != null) {
+			_instance.RemoveDelegate<T> (delegateInstance);
+		}
+	}
+
+	public void TriggerEvent(GameEvent eventInstance){
 		Debug.Log ("Trigger event:" + eventInstance.GetType ());
 		EventDelegate existedDelegates;
 		if(_delegateDictionary.TryGetValue(eventInstance.GetType(),out existedDelegates)){
 			existedDelegates.Invoke (eventInstance);
 		}
-		return false;
 	}
 
 	public void QueueEvent(GameEvent eventInstance){
 		Debug.Log ("Queue event:" + eventInstance.GetType ());
 		_eventQueue.Enqueue (eventInstance);
 	}
-
-	// Use this for initialization
-	void Start (){
-	
-	}
-
-	void OnDisable() {
-	}
-	
+		
 	// Update is called once per frame
-	void Update (){
+	public void Update (){
 		while(_eventQueue.Count > 0){
 			GameEvent eventInstance = _eventQueue.Dequeue () as GameEvent;
 			TriggerEvent (eventInstance);
