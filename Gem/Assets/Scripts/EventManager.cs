@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class EventManager{
+	private long _limitTimeInTicks = (long)((1.0 / 30) * Mathf.Pow(10,7));
 	public delegate void EventDelegate(GameEvent eventInstance);
 	private Dictionary<System.Type,EventDelegate> _delegateDictionary;
 	private Queue _eventQueue;
@@ -79,12 +80,20 @@ public class EventManager{
 		Debug.Log ("Queue event:" + eventInstance.GetType ());
 		_eventQueue.Enqueue (eventInstance);
 	}
-		
-	// Update is called once per frame
+
 	public void Update (){
+		long nowInTicks = System.DateTime.Now.Ticks;
+		long eventCount = 0;
 		while(_eventQueue.Count > 0){
 			GameEvent eventInstance = _eventQueue.Dequeue () as GameEvent;
 			TriggerEvent (eventInstance);
+
+			eventCount += 1;
+			long elapsedTimeInTicks = System.DateTime.Now.Ticks - nowInTicks;
+			if (elapsedTimeInTicks >= _limitTimeInTicks) {
+				Debug.Log ("Time is up, skip to next update: processed event "+eventCount);
+				break;
+			}
 		}
 	}
 }
