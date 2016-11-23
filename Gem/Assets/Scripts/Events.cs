@@ -10,3 +10,6 @@ public class GameEventUpdateLoading : GameEvent{
 
 public class GameEventFinishLoading : GameEvent{
 }
+
+public class GameEventGoToMainMenuScene : GameEvent{
+}

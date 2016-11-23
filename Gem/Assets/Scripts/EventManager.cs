@@ -76,9 +76,21 @@ public class EventManager{
 		}
 	}
 
+	public static void SafeTriggerEvent(GameEvent eventInstance){
+		if (_instance != null) {
+			_instance.TriggerEvent (eventInstance);
+		}
+	}
+
 	public void QueueEvent(GameEvent eventInstance){
 		Debug.Log ("Queue event:" + eventInstance.GetType ());
 		_eventQueue.Enqueue (eventInstance);
+	}
+
+	public static void SafeQueueEvent(GameEvent eventInstance){
+		if (_instance != null) {
+			_instance.QueueEvent (eventInstance);
+		}
 	}
 
 	public void Update (){

@@ -60,18 +60,18 @@ public class LoadingBar : MonoBehaviour {
 			for (int i = 1; i <= 100; ++i) {
 				GameEventUpdateLoading e = new GameEventUpdateLoading ();
 				e.percent = i;
-				EventManager.instance.QueueEvent (e);
+				EventManager.SafeQueueEvent (e);
 			}
 		} else if (eventType == typeof(GameEventUpdateLoading)) {
 			GameEventUpdateLoading currentEvent = (GameEventUpdateLoading)eventInstance;
 			Debug.Log ("GameEventUpdateLoading:" + currentEvent.percent);
 			if (currentEvent.percent == 100) {
 				GameEventFinishLoading e = new GameEventFinishLoading ();
-				EventManager.instance.QueueEvent (e);
+				EventManager.SafeQueueEvent (e);
 			}
 			SetPercent (currentEvent.percent);
 		} else if (eventType == typeof(GameEventFinishLoading)) {
-			Destroy (gameObject);
+			EventManager.SafeQueueEvent(new GameEventGoToMainMenuScene());
 		}
 	}
 }

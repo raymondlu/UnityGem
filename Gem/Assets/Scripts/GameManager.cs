@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour{
 	private EventManager _eventManager;
@@ -31,6 +32,14 @@ public class GameManager : MonoBehaviour{
 		DontDestroyOnLoad (transform.gameObject);
 	}
 
+	void OnEnable(){
+		EventManager.SafeAddDelegate<GameEventGoToMainMenuScene> (OnGameEvent);
+	}
+
+	void OnDisable(){
+		EventManager.SafeRemoveDelegate<GameEventGoToMainMenuScene> (OnGameEvent);
+	}
+
 	// Use this for initialization
 	void Start (){
 		_eventManager.QueueEvent (new GameEventStartLoading());
@@ -40,6 +49,13 @@ public class GameManager : MonoBehaviour{
 	void Update (){
 		if (_eventManager != null) {
 			_eventManager.Update ();
+		}
+	}
+
+	void OnGameEvent(GameEvent eventInstance){
+		System.Type eventType = eventInstance.GetType ();
+		if (eventType == typeof(GameEventGoToMainMenuScene)) {
+			SceneManager.LoadScene ("MainMenuScene");
 		}
 	}
 
