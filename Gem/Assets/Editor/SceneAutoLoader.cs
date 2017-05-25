@@ -26,7 +26,7 @@ public static class SceneAutoLoader
 		// Raymond:
 		// Failed to show menu item to set master scene.
 		// So set the flag manually here.
-		LoadMasterOnPlay = true;
+		//LoadMasterOnPlay = true;
         EditorApplication.playmodeStateChanged += OnPlayModeChanged;
     }
     // Menu items to select the "master" scene and control whether or not to load it.
