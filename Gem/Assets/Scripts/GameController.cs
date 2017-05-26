@@ -9,6 +9,9 @@ using System.Collections;
 //------------------------------------------------------------------------------
 public class GameController : MonoBehaviour
 {
+	public GameObject gemPrefab;
+	public GameObject boardGO;
+
 	private static GameController gameController;
 
 	//--------------------------------------------------------------------------
@@ -40,17 +43,25 @@ public class GameController : MonoBehaviour
 	
 	protected void Start()
 	{
+		for (int i = 0; i < 64; ++i) {
+			GameObject gemObj = Instantiate (gemPrefab);
+			gemObj.transform.SetParent (boardGO.transform, false);
+		}
 	}
 	
 	protected void Update()
 	{
-		if(Input.GetMouseButtonDown(0) == true)
-		{
-			MainController.SwitchScene("Menu Scene");
-		}
 	}
 
 	//--------------------------------------------------------------------------
 	// private methods
 	//--------------------------------------------------------------------------
+
+	//--------------------------------------------------------------------------
+	// public methods
+	//--------------------------------------------------------------------------
+	public void ShowMenu()
+	{
+		MainController.SwitchScene ("MenuScene");
+	}
 }

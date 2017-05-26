@@ -11,9 +11,6 @@ public class MenuController : MonoBehaviour
 {
 	private static MenuController menuController;
 
-	public GameObject menuCanvas;
-	public GameObject boardCanvas;
-
 	//--------------------------------------------------------------------------
 	// public static methods
 	//--------------------------------------------------------------------------
@@ -43,7 +40,6 @@ public class MenuController : MonoBehaviour
 	
 	protected void Start()
 	{
-		ShowMenu ();
 	}
 	
 	protected void Update()
@@ -58,15 +54,8 @@ public class MenuController : MonoBehaviour
 	//--------------------------------------------------------------------------
 	// public methods
 	//--------------------------------------------------------------------------
-	public void ShowMenu()
-	{
-		menuCanvas.SetActive (true);
-		boardCanvas.SetActive (false);
-	}
-
 	public void ShowBoard()
 	{
-		menuCanvas.SetActive (false);
-		boardCanvas.SetActive (true);
+		MainController.SwitchScene ("GameScene");
 	}
 }
