@@ -2,6 +2,7 @@
 //#define LOG_EXTRA_INFO
 
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 //------------------------------------------------------------------------------
@@ -10,7 +11,9 @@ using System.Collections;
 public class GameController : MonoBehaviour
 {
 	public GameObject gemPrefab;
-	public GameObject boardGO;
+	public GameObject board;
+	public GameObject scoreText;
+	public GameObject levelText;
 
 	private static GameController gameController;
 
@@ -45,7 +48,17 @@ public class GameController : MonoBehaviour
 	{
 		for (int i = 0; i < 64; ++i) {
 			GameObject gemObj = Instantiate (gemPrefab);
-			gemObj.transform.SetParent (boardGO.transform, false);
+			gemObj.transform.SetParent (board.transform, false);
+		}
+
+		Text text = scoreText.GetComponent<Text>();
+		if (text != null) {
+			text.text = GameState.CurrentScore.ToString();
+		}
+
+		text = levelText.GetComponent<Text>();
+		if (text != null) {
+			text.text = GameState.CurrentLevel.ToString();
 		}
 	}
 	
