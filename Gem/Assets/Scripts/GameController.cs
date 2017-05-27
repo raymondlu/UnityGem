@@ -3,7 +3,8 @@
 
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
+using System.Collections.Generic;
+
 
 //------------------------------------------------------------------------------
 // class definition
@@ -14,8 +15,10 @@ public class GameController : MonoBehaviour
 	public GameObject board;
 	public GameObject scoreText;
 	public GameObject levelText;
-	public bool shouldUpdate = true;
+	public List<Sprite> gems = new List<Sprite> ();
 
+	private GameObject[,] gemObjectMatrix;
+	private bool shouldUpdate = true;
 	private static GameController gameController;
 
 	//--------------------------------------------------------------------------
@@ -47,6 +50,16 @@ public class GameController : MonoBehaviour
 	
 	protected void Start(){
 		shouldUpdate = true;
+
+		var gemRow = GameConfig.Instance.gemRow;
+		var gemColumn = GameConfig.Instance.gemColumn;
+		gemObjectMatrix = new GameObject[gemRow, gemColumn];
+
+		for (int r = 0; r < gemRow; ++r) {
+			for (int c = 0; c < gemColumn; ++c) {
+				gemObjectMatrix[r,c] = CreateGemObject (r, c);
+			}
+		}
 	}
 	
 	protected void Update(){
@@ -59,26 +72,37 @@ public class GameController : MonoBehaviour
 	//--------------------------------------------------------------------------
 	// private methods
 	//--------------------------------------------------------------------------
-
-	private void UpdateGame(){
+	private GameObject CreateGemObject(int row, int column, bool preventRepeat = true){
 		var startX = GameConfig.Instance.gemStartX;
 		var startY = GameConfig.Instance.gemStartY;
 		var gemWidth = GameConfig.Instance.gemWidth;
 		var gemHeight = GameConfig.Instance.gemHeight;
-		var gemRow = GameConfig.Instance.gemRow;
-		var gemColumn = GameConfig.Instance.gemColumn;
-
 		Vector3 pos = new Vector3 (0, 0, board.transform.position.z);
+		pos.x = startX + column * gemWidth;
+		pos.y = startY - row * gemHeight;
+		GameObject gemObj = Instantiate (gemPrefab, pos, board.transform.rotation) as GameObject;
+		gemObj.transform.SetParent (board.transform, false);
 
-		for (int r = 0; r < gemRow; ++r) {
-			for (int c = 0; c < gemColumn; ++c) {
-				pos.x = startX + c * gemWidth;
-				pos.y = startY - r * gemHeight;
-				GameObject gemObj = Instantiate (gemPrefab, pos, board.transform.rotation) as GameObject;
-				gemObj.transform.SetParent (board.transform, false);
+		List<Sprite> candidateGemSprites = new List<Sprite> ();
+		candidateGemSprites.AddRange (gems);
+
+		if (preventRepeat) {
+			if (row - 1 >= 0 && gemObjectMatrix [row - 1, column] != null) {
+				Sprite leftGemSprite = gemObjectMatrix [row - 1, column].GetComponent<SpriteRenderer>().sprite;
+				candidateGemSprites.Remove (leftGemSprite);
+			}
+
+			if (column - 1 >=0 && gemObjectMatrix [row, column - 1] != null) {
+				Sprite uppperGemSprite = gemObjectMatrix [row, column - 1].GetComponent<SpriteRenderer>().sprite;
+				candidateGemSprites.Remove (uppperGemSprite);
 			}
 		}
 
+		gemObj.GetComponent<SpriteRenderer> ().sprite = candidateGemSprites [Random.Range (0, candidateGemSprites.Count)];
+
+		return gemObj;
+	}
+	private void UpdateGame(){
 		Text text = scoreText.GetComponent<Text>();
 		if (text != null) {
 			text.text = GameState.CurrentScore.ToString();
