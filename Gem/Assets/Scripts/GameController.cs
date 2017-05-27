@@ -14,6 +14,7 @@ public class GameController : MonoBehaviour
 	public GameObject board;
 	public GameObject scoreText;
 	public GameObject levelText;
+	public bool shouldUpdate = true;
 
 	private static GameController gameController;
 
@@ -44,11 +45,38 @@ public class GameController : MonoBehaviour
 	{
 	}
 	
-	protected void Start()
-	{
-		for (int i = 0; i < 64; ++i) {
-			GameObject gemObj = Instantiate (gemPrefab);
-			gemObj.transform.SetParent (board.transform, false);
+	protected void Start(){
+		shouldUpdate = true;
+	}
+	
+	protected void Update(){
+		if (shouldUpdate) {
+			shouldUpdate = false;
+			UpdateGame ();
+		}
+	}
+
+	//--------------------------------------------------------------------------
+	// private methods
+	//--------------------------------------------------------------------------
+
+	private void UpdateGame(){
+		var startX = GameConfig.Instance.gemStartX;
+		var startY = GameConfig.Instance.gemStartY;
+		var gemWidth = GameConfig.Instance.gemWidth;
+		var gemHeight = GameConfig.Instance.gemHeight;
+		var gemRow = GameConfig.Instance.gemRow;
+		var gemColumn = GameConfig.Instance.gemColumn;
+
+		Vector3 pos = new Vector3 (0, 0, board.transform.position.z);
+
+		for (int r = 0; r < gemRow; ++r) {
+			for (int c = 0; c < gemColumn; ++c) {
+				pos.x = startX + c * gemWidth;
+				pos.y = startY - r * gemHeight;
+				GameObject gemObj = Instantiate (gemPrefab, pos, board.transform.rotation) as GameObject;
+				gemObj.transform.SetParent (board.transform, false);
+			}
 		}
 
 		Text text = scoreText.GetComponent<Text>();
@@ -61,14 +89,6 @@ public class GameController : MonoBehaviour
 			text.text = GameState.CurrentLevel.ToString();
 		}
 	}
-	
-	protected void Update()
-	{
-	}
-
-	//--------------------------------------------------------------------------
-	// private methods
-	//--------------------------------------------------------------------------
 
 	//--------------------------------------------------------------------------
 	// public methods
