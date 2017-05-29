@@ -87,7 +87,7 @@ public class GameController : MonoBehaviour
         {
             for (int column = 0; column < gemColumn; column++)
             {
-                CreateGem(row, column, true);
+                SpawnGem(row, column, true);
             }
         }
 	}
@@ -113,7 +113,7 @@ public class GameController : MonoBehaviour
 			text.text = GameState.CurrentLevel.ToString();
 		}
 	}
-    private GemController CreateGem(int row, int column, bool shouldPreventRepeating)
+    private GemController SpawnGem(int row, int column, bool shouldPreventRepeating)
     {
         var candidateGemTypes = new List<GemType>();
         for (int i = 0; i < (int)GemType.Gem_Count; i++)
@@ -136,8 +136,18 @@ public class GameController : MonoBehaviour
         }
 
         var selectedGemType = candidateGemTypes[Random.Range(0, candidateGemTypes.Count)];
-        var gemController = GemController.CreateGemObject(row, column, selectedGemType, gemSprites[(int)selectedGemType], board);
+        var gemController = GemController.CreateGemObject(row, column, selectedGemType, gemSprites[(int)selectedGemType]);
+        var startX = GameConfig.Instance.gemStartX;
+        var startY = GameConfig.Instance.gemStartY;
+        var gemWidth = GameConfig.Instance.gemWidth;
+        var gemHeight = GameConfig.Instance.gemHeight;
+        Vector3 pos = new Vector3(0, 0, board.transform.position.z);
+        pos.x = startX + column * gemWidth;
+        pos.y = startY - row * gemHeight;
+        gemController.transform.position = pos;
+
         currentGemControllerMatrix[row, column] = gemController;
+
         return gemController;
     }
 

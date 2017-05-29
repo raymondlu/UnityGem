@@ -6,11 +6,11 @@ using UnityEngine.EventSystems;
 public class GemController : MonoBehaviour
 {
     [SerializeField]
-    private int row = 0;
+    private int _row = 0;
     [SerializeField]
-    private int column = 0;
+    private int _column = 0;
     [SerializeField]
-    private GemType type = GemType.Gem_Count;
+    private GemType _type = GemType.Gem_Count;
 
     private Renderer _renderer;
     private static List<GemController> _gemControllers;
@@ -19,12 +19,7 @@ public class GemController : MonoBehaviour
     {
         get
         {
-            return type;
-        }
-
-        set
-        {
-            type = value;
+            return _type;
         }
     }
 
@@ -32,12 +27,7 @@ public class GemController : MonoBehaviour
     {
         get
         {
-            return column;
-        }
-
-        set
-        {
-            column = value;
+            return _column;
         }
     }
 
@@ -45,52 +35,28 @@ public class GemController : MonoBehaviour
     {
         get
         {
-            return row;
-        }
-
-        set
-        {
-            row = value;
+            return _row;
         }
     }
 
-    public static GemController CreateGemObject(int row, int column, GemType type, Sprite sprite, GameObject board)
+    public static GemController CreateGemObject(int row, int column, GemType type, Sprite sprite)
     {
-        if (_gemControllers == null)
-        {
-            _gemControllers = new List<GemController>();
-        }
-
-        var startX = GameConfig.Instance.gemStartX;
-        var startY = GameConfig.Instance.gemStartY;
-        var gemWidth = GameConfig.Instance.gemWidth;
-        var gemHeight = GameConfig.Instance.gemHeight;
-        Vector3 pos = new Vector3(0, 0, board.transform.position.z);
-        pos.x = startX + column * gemWidth;
-        pos.y = startY - row * gemHeight;
-
         foreach(var controller in _gemControllers)
         {
             if (controller.gameObject.activeSelf == false)
             {
                 controller.gameObject.GetComponent<SpriteRenderer>().sprite = sprite;
-                controller.Type = type;
-                controller.Row = row;
-                controller.Column = column;
+                controller._type = type;
+                controller._row = row;
+                controller._column = column;
+                controller.gameObject.SetActive(true);
                 return controller;
             }
         }
 
-        GameObject gemObj = Instantiate(GameController.Instance.GemPrefab, pos, board.transform.rotation) as GameObject;
-        gemObj.transform.SetParent(board.transform, false);
+        Debug.Assert(false, "Not enough gem instances in cache.");
 
-        gemObj.GetComponent<SpriteRenderer>().sprite = sprite;
-        var gemController = gemObj.GetComponent<GemController>();
-        gemController.Type = type;
-        gemController.Row = row;
-        gemController.Column = column;
-
-        return gemObj.GetComponent<GemController>();
+        return null;
     }
 
     public void DestroyGem()
@@ -100,7 +66,12 @@ public class GemController : MonoBehaviour
 
     private void Awake()
     {
+        if (_gemControllers == null)
+        {
+            _gemControllers = new List<GemController>();
+        }
         _gemControllers.Add(this);
+        gameObject.SetActive(false);
     }
 
     private void OnDestroy()
