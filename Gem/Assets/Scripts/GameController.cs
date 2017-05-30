@@ -147,6 +147,7 @@ public class GameController : MonoBehaviour
         gemController.transform.position = pos;
 
         currentGemControllerMatrix[row, column] = gemController;
+        gemController.GemOperationEvent += OnGemOperation;
 
         return gemController;
     }
@@ -155,6 +156,7 @@ public class GameController : MonoBehaviour
     {
         if (currentGemControllerMatrix[row, column] != null)
         {
+            currentGemControllerMatrix[row, column].GemOperationEvent -= OnGemOperation;
             currentGemControllerMatrix[row, column].DestroyGem();
             currentGemControllerMatrix[row, column] = null;
         }
@@ -166,4 +168,8 @@ public class GameController : MonoBehaviour
 	{
 		MainController.SwitchScene ("MenuScene");
 	}
+    public void OnGemOperation(int row, int column, GemOperation operation)
+    {
+        Debug.Log(string.Format("Gem:{0},{1} is {2}.", row, column, operation.ToString()));
+    }
 }

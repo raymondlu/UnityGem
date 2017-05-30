@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+public enum GemOperation {TouchEnter, TouchDown, TouchUp, TouchExit};
+
 public class GemController : MonoBehaviour
 {
     [SerializeField]
@@ -11,6 +13,9 @@ public class GemController : MonoBehaviour
     private int _column = 0;
     [SerializeField]
     private GemType _type = GemType.Gem_Count;
+
+    public delegate void GemOperationHandler(int row, int column, GemOperation operation);
+    public event GemOperationHandler GemOperationEvent;
 
     private Renderer _renderer;
     private static List<GemController> _gemControllers;
@@ -95,20 +100,35 @@ public class GemController : MonoBehaviour
 		
 	}
 
+    private void OnMouseEnter()
+    {
+        if (GemOperationEvent != null)
+        {
+            GemOperationEvent(_row, _column, GemOperation.TouchEnter);
+        }
+    }
+    private void OnMouseExit()
+    {
+        if (GemOperationEvent != null)
+        {
+            GemOperationEvent(_row, _column, GemOperation.TouchExit);
+        }
+    }
     private void OnMouseDown()
     {
         _renderer.material.color = Color.red;
+
+        if (GemOperationEvent != null)
+        {
+            GemOperationEvent(_row, _column, GemOperation.TouchDown);
+        }
     }
     private void OnMouseUp()
     {
         _renderer.material.color = Color.white;
-    }
-    private void OnMouseOver()
-    {
-        //rend.material.color = Color.gray;
-    }
-    private void OnMouseExit()
-    {
-        _renderer.material.color = Color.white;
+        if (GemOperationEvent != null)
+        {
+            GemOperationEvent(_row, _column, GemOperation.TouchUp);
+        }
     }
 }
