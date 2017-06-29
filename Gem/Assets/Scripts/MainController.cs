@@ -96,7 +96,7 @@ public class MainController : MonoBehaviour
 	
 	protected void Update()
 	{
-		if(updateDelegates[(int)sceneState] != null)
+		if(updateDelegates != null && updateDelegates[(int)sceneState] != null)
 		{
 			updateDelegates[(int)sceneState]();
 		}
