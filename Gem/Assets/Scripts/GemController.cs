@@ -1,7 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 public enum GemOperation {TouchEnter, TouchDown, TouchUp, TouchExit};
 
@@ -42,6 +40,31 @@ public class GemController : MonoBehaviour
         {
             return _row;
         }
+    }
+
+    public static bool IsAdjacent(GemController first, GemController second)
+    {
+        bool isAdjacent = false;
+        do
+        {
+            if (System.Math.Abs(first.Row - second.Row) > 1 || System.Math.Abs(first.Column - second.Column) > 1)
+            {
+                break;
+            }
+            if (System.Math.Abs(first.Row - second.Row) == 1 && System.Math.Abs(first.Column - second.Column) == 1)
+            {
+                break;
+            }
+            if (first.Row == second.Row && first.Column == second.Column)
+            {
+                break;
+            }
+
+            isAdjacent = true;
+
+        } while (false);
+
+        return isAdjacent;
     }
 
     public static GemController CreateGemObject(int row, int column, GemType type, Sprite sprite)

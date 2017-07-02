@@ -4,9 +4,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using DG.Tweening;
 
 public enum GemType { Gem_1, Gem_2, Gem_3, Gem_4, Gem_5, Gem_6, Gem_7, Gem_8, Gem_Count };
-public enum GameBoardState { Idle, FirstSelection, SecondSelection, Swap, Calculation, ReverseSwap, DestroyGem, SpawnGem, FallGem, StateCount };
+public enum GameBoardState { Idle, FirstSelection, SecondSelection, Swap, ReverseSwap, DestroyGem, SpawnGem, FallGem, StateCount };
 //------------------------------------------------------------------------------
 // class definition
 //------------------------------------------------------------------------------
@@ -27,6 +28,7 @@ public class GameController : MonoBehaviour
 
     private delegate void GameBoardStateUpdate();
     private GameBoardStateUpdate[] _gameBoardStateUpdates;
+    private bool _isSwappingDone = false;
     
     private bool shouldUpdate = false;
 	private static GameController gameController;
@@ -142,24 +144,25 @@ public class GameController : MonoBehaviour
         {
             if (operation == GemOperation.TouchDown/* || operation == GemOperation.TouchEnter*/)
             {
-                // TODO:
                 // check if the two selected gem is adjacent
-                bool isAdjacent = true;
+                var selectedGemControler = _currentGemControllerMatrix[row, column];
+                bool isAdjacent = GemController.IsAdjacent(_firstSelectedGemControler, selectedGemControler);
                 if (isAdjacent)
                 {
-                    _secondSelectedGemControler = _currentGemControllerMatrix[row, column];
+                    _secondSelectedGemControler = selectedGemControler;
                     ChangeToState(GameBoardState.SecondSelection);
                 }
                 else
                 {
-                    _firstSelectedGemControler = _currentGemControllerMatrix[row, column];
+                    _firstSelectedGemControler = selectedGemControler;
                 }
             }
         };
 
         _gameBoardStateUpdates[(int)GameBoardState.SecondSelection] = () =>
         {
-
+            ChangeToState(GameBoardState.Swap);
+            SwapTwoGems();
         };
         _gameBoardStateOperationHandlers[(int)GameBoardState.SecondSelection] = (int row, int column, GemOperation operation) =>
         {
@@ -168,25 +171,30 @@ public class GameController : MonoBehaviour
 
         _gameBoardStateUpdates[(int)GameBoardState.Swap] = () =>
         {
-
+            if (_isSwappingDone)
+            {
+                if (!CalculateSwappedGems())
+                {
+                    ChangeToState(GameBoardState.ReverseSwap);
+                    SwapTwoGems();
+                }
+                else
+                {
+                    ChangeToState(GameBoardState.DestroyGem);
+                }
+            }
         };
         _gameBoardStateOperationHandlers[(int)GameBoardState.Swap] = (int row, int column, GemOperation operation) =>
         {
 
         };
 
-        _gameBoardStateUpdates[(int)GameBoardState.Calculation] = () =>
-        {
-
-        };
-        _gameBoardStateOperationHandlers[(int)GameBoardState.Calculation] = (int row, int column, GemOperation operation) =>
-        {
-
-        };
-
         _gameBoardStateUpdates[(int)GameBoardState.ReverseSwap] = () =>
         {
-
+            if (_isSwappingDone)
+            {
+                ChangeToState(GameBoardState.Idle);
+            }
         };
         _gameBoardStateOperationHandlers[(int)GameBoardState.ReverseSwap] = (int row, int column, GemOperation operation) =>
         {
@@ -219,6 +227,23 @@ public class GameController : MonoBehaviour
         {
 
         };
+    }
+
+    private void SwapTwoGems()
+    {
+        _isSwappingDone = false;
+        var mySequence = DOTween.Sequence();
+        float moveDuration = 0.5f;
+        mySequence.Append(_firstSelectedGemControler.transform.DOLocalMove(_secondSelectedGemControler.transform.localPosition, moveDuration));
+        mySequence.Join(_secondSelectedGemControler.transform.DOLocalMove(_firstSelectedGemControler.transform.localPosition, moveDuration));
+        mySequence.AppendCallback(() => { _isSwappingDone = true; });
+    }
+
+    private bool CalculateSwappedGems()
+    {
+        //TODO:
+        // implement calculations
+        return false;
     }
 
     protected void Update(){
