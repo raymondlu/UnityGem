@@ -23,11 +23,7 @@ public class GameController : MonoBehaviour
 
     private GameBoardState _currentGameBoardState = GameBoardState.Idle;
 
-    private delegate void GameBoardStateOperationHandler(int row, int column, GemOperation operation);
-    private GameBoardStateOperationHandler[] _gameBoardStateOperationHandlers;
-
-    private delegate void GameBoardStateUpdate();
-    private GameBoardStateUpdate[] _gameBoardStateUpdates;
+    private Dictionary<GameBoardState,GameControllerStateBase> _states = new Dictionary<GameBoardState, GameControllerStateBase>();
     private bool _isSwappingDone = false;
     
     private bool shouldUpdate = false;
@@ -75,7 +71,8 @@ public class GameController : MonoBehaviour
 	{
 		if(gameController != null)
 		{
-			gameController = null;
+            gameController.DestroyStateHandlers();
+            gameController = null;
 		}
 	}
 	
@@ -108,8 +105,6 @@ public class GameController : MonoBehaviour
         _currentGameBoardState = GameBoardState.Idle;
         _firstSelectedGemControler = null;
         _secondSelectedGemControler = null;
-        _gameBoardStateOperationHandlers = new GameBoardStateOperationHandler[(int)GameBoardState.StateCount];
-        _gameBoardStateUpdates = new GameBoardStateUpdate[(int)GameBoardState.StateCount];
 
         // implementations
         SetupStateHandlers();
@@ -117,117 +112,34 @@ public class GameController : MonoBehaviour
 
     private void ChangeToState(GameBoardState newState)
     {
+        if (_states[_currentGameBoardState] != null)
+        {
+            _states[_currentGameBoardState].Exit();
+        }
         _currentGameBoardState = newState;
+        if (_states[_currentGameBoardState] != null)
+        {
+            _states[_currentGameBoardState].Enter();
+        }
         Debug.Log(string.Format("Change to new state:{0}", _currentGameBoardState.ToString()));
     }
 
     private void SetupStateHandlers()
     {
-        _gameBoardStateUpdates[(int)GameBoardState.Idle] = () =>
+        _states.Add(GameBoardState.Idle, new IdleState(this));
+        _states.Add(GameBoardState.FirstSelection, new FirstSelectionState(this));
+        _states.Add(GameBoardState.SecondSelection, new SecondSelectionState(this));
+        _states.Add(GameBoardState.Swap, new SwapState(this));
+        _states.Add(GameBoardState.ReverseSwap, new ReverseSwapState(this));
+    }
+
+    private void DestroyStateHandlers()
+    {
+        foreach (var state in _states.Values)
         {
-
-        };
-        _gameBoardStateOperationHandlers[(int)GameBoardState.Idle] = (int row, int column, GemOperation operation) =>
-        {
-            if (operation == GemOperation.TouchDown)
-            {
-                _firstSelectedGemControler = _currentGemControllerMatrix[row, column];
-                ChangeToState(GameBoardState.FirstSelection);
-            }
-        };
-
-        _gameBoardStateUpdates[(int)GameBoardState.FirstSelection] = () =>
-        {
-
-        };
-        _gameBoardStateOperationHandlers[(int)GameBoardState.FirstSelection] = (int row, int column, GemOperation operation) =>
-        {
-            if (operation == GemOperation.TouchDown/* || operation == GemOperation.TouchEnter*/)
-            {
-                // check if the two selected gem is adjacent
-                var selectedGemControler = _currentGemControllerMatrix[row, column];
-                bool isAdjacent = GemController.IsAdjacent(_firstSelectedGemControler, selectedGemControler);
-                if (isAdjacent)
-                {
-                    _secondSelectedGemControler = selectedGemControler;
-                    ChangeToState(GameBoardState.SecondSelection);
-                }
-                else
-                {
-                    _firstSelectedGemControler = selectedGemControler;
-                }
-            }
-        };
-
-        _gameBoardStateUpdates[(int)GameBoardState.SecondSelection] = () =>
-        {
-            ChangeToState(GameBoardState.Swap);
-            SwapTwoGems();
-        };
-        _gameBoardStateOperationHandlers[(int)GameBoardState.SecondSelection] = (int row, int column, GemOperation operation) =>
-        {
-
-        };
-
-        _gameBoardStateUpdates[(int)GameBoardState.Swap] = () =>
-        {
-            if (_isSwappingDone)
-            {
-                bool hasMatchedGames = CalculateSwappedGems();
-                if (!hasMatchedGames)
-                {
-                    ChangeToState(GameBoardState.ReverseSwap);
-                    SwapTwoGems();
-                }
-                else
-                {
-                    ChangeToState(GameBoardState.DestroyGem);
-                }
-            }
-        };
-        _gameBoardStateOperationHandlers[(int)GameBoardState.Swap] = (int row, int column, GemOperation operation) =>
-        {
-
-        };
-
-        _gameBoardStateUpdates[(int)GameBoardState.ReverseSwap] = () =>
-        {
-            if (_isSwappingDone)
-            {
-                ChangeToState(GameBoardState.Idle);
-            }
-        };
-        _gameBoardStateOperationHandlers[(int)GameBoardState.ReverseSwap] = (int row, int column, GemOperation operation) =>
-        {
-
-        };
-
-        _gameBoardStateUpdates[(int)GameBoardState.DestroyGem] = () =>
-        {
-
-        };
-        _gameBoardStateOperationHandlers[(int)GameBoardState.DestroyGem] = (int row, int column, GemOperation operation) =>
-        {
-
-        };
-
-        _gameBoardStateUpdates[(int)GameBoardState.SpawnGem] = () =>
-        {
-
-        };
-        _gameBoardStateOperationHandlers[(int)GameBoardState.SpawnGem] = (int row, int column, GemOperation operation) =>
-        {
-
-        };
-
-        _gameBoardStateUpdates[(int)GameBoardState.FallGem] = () =>
-        {
-
-        };
-        _gameBoardStateOperationHandlers[(int)GameBoardState.FallGem] = (int row, int column, GemOperation operation) =>
-        {
-
-        };
+            state.OnDestroy();
+        }
+        _states = null;
     }
 
     private void SwapTwoGems()
@@ -261,9 +173,9 @@ public class GameController : MonoBehaviour
 			UpdateGameStatus ();
 		}
 
-        if (_gameBoardStateUpdates != null && _gameBoardStateUpdates[(int)_currentGameBoardState] != null)
+        if (_states != null && _states[_currentGameBoardState] != null)
         {
-            _gameBoardStateUpdates[(int)_currentGameBoardState]();
+            _states[_currentGameBoardState].Update();
         }
 	}
 
@@ -340,9 +252,135 @@ public class GameController : MonoBehaviour
     public void OnGemOperation(int row, int column, GemOperation operation)
     {
         //Debug.Log(string.Format("Gem:{0},{1} is {2}.", row, column, operation.ToString()));
-        if (_gameBoardStateOperationHandlers[(int)_currentGameBoardState] != null)
+        if (_states[_currentGameBoardState] != null)
         {
-            _gameBoardStateOperationHandlers[(int)_currentGameBoardState](row, column, operation);
+            _states[_currentGameBoardState].OnGemOperation(row, column, operation);
+        }
+    }
+
+    // state classes
+    class GameControllerStateBase : Misc.StateBase
+    {
+        protected GameController _controller;
+        public GameControllerStateBase(GameController controller)
+        {
+            _controller = controller;
+        }
+        virtual public void OnGemOperation(int row, int column, GemOperation operation)
+        {
+            //Implemented in child class
+        }
+        virtual public void OnDestroy()
+        {
+            //Implemented in child class
+            _controller = null;
+        }
+    }
+    class IdleState : GameControllerStateBase
+    {
+        public IdleState(GameController controller) : base(controller)
+        {
+            // Do nothing
+        }
+
+        public override void OnGemOperation(int row, int column, GemOperation operation)
+        {
+            base.OnGemOperation(row, column, operation);
+            if (operation == GemOperation.TouchDown)
+            {
+                _controller._firstSelectedGemControler = _controller._currentGemControllerMatrix[row, column];
+                _controller.ChangeToState(GameBoardState.FirstSelection);
+            }
+        }
+    }
+    class FirstSelectionState : GameControllerStateBase
+    {
+        public FirstSelectionState(GameController controller) : base(controller)
+        {
+            // Do nothing
+        }
+
+        public override void OnGemOperation(int row, int column, GemOperation operation)
+        {
+            base.OnGemOperation(row, column, operation);
+            if (operation == GemOperation.TouchDown/* || operation == GemOperation.TouchEnter*/)
+            {
+                // check if the two selected gem is adjacent
+                var selectedGemControler = _controller._currentGemControllerMatrix[row, column];
+                bool isAdjacent = GemController.IsAdjacent(_controller._firstSelectedGemControler, selectedGemControler);
+                if (isAdjacent)
+                {
+                    _controller._secondSelectedGemControler = selectedGemControler;
+                    _controller.ChangeToState(GameBoardState.SecondSelection);
+                }
+                else
+                {
+                    _controller._firstSelectedGemControler = selectedGemControler;
+                }
+            }
+        }
+    }
+    class SecondSelectionState : GameControllerStateBase
+    {
+        public SecondSelectionState(GameController controller) : base(controller)
+        {
+            // Do nothing
+        }
+
+        public override void Enter()
+        {
+            base.Enter();
+            _controller.ChangeToState(GameBoardState.Swap);
+            //_controller.SwapTwoGems();
+        }
+    }
+
+    class SwapState : GameControllerStateBase
+    {
+        public SwapState(GameController controller) : base(controller)
+        {
+            // Do nothing
+        }
+
+        public override void Enter()
+        {
+            base.Enter();
+            _controller.SwapTwoGems();
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            if (_controller._isSwappingDone)
+            {
+                bool hasMatchedGames = _controller.CalculateSwappedGems();
+                if (!hasMatchedGames)
+                {
+                    _controller.ChangeToState(GameBoardState.ReverseSwap);
+                    _controller.SwapTwoGems();
+                }
+                else
+                {
+                    _controller.ChangeToState(GameBoardState.DestroyGem);
+                }
+            }
+        }
+    }
+
+    class ReverseSwapState : GameControllerStateBase
+    {
+        public ReverseSwapState(GameController controller) : base(controller)
+        {
+            // Do nothing
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            if (_controller._isSwappingDone)
+            {
+                _controller.ChangeToState(GameBoardState.Idle);
+            }
         }
     }
 }
