@@ -173,7 +173,8 @@ public class GameController : MonoBehaviour
         {
             if (_isSwappingDone)
             {
-                if (!CalculateSwappedGems())
+                bool hasMatchedGames = CalculateSwappedGems();
+                if (!hasMatchedGames)
                 {
                     ChangeToState(GameBoardState.ReverseSwap);
                     SwapTwoGems();
@@ -236,13 +237,21 @@ public class GameController : MonoBehaviour
         float moveDuration = 0.5f;
         mySequence.Append(_firstSelectedGemControler.transform.DOLocalMove(_secondSelectedGemControler.transform.localPosition, moveDuration));
         mySequence.Join(_secondSelectedGemControler.transform.DOLocalMove(_firstSelectedGemControler.transform.localPosition, moveDuration));
-        mySequence.AppendCallback(() => { _isSwappingDone = true; });
+        mySequence.AppendCallback(() => {
+            _isSwappingDone = true;
+            _currentGemControllerMatrix[_firstSelectedGemControler.Row,_firstSelectedGemControler.Column] = _secondSelectedGemControler;
+            _currentGemControllerMatrix[_secondSelectedGemControler.Row,_secondSelectedGemControler.Column] = _firstSelectedGemControler;
+        });
     }
 
     private bool CalculateSwappedGems()
     {
-        //TODO:
-        // implement calculations
+        /*var dirctions = new Dictionary<int, int> {
+            {-1, 0},// left
+            {1, 0},// right
+            {0, -1},// up
+            {0, 1},// down
+        };*/
         return false;
     }
 

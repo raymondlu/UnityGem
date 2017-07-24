@@ -11,6 +11,8 @@ public class GemController : MonoBehaviour
     private int _column = 0;
     [SerializeField]
     private GemType _type = GemType.Gem_Count;
+    [SerializeField]
+    private bool _isTagged = false;
 
     public delegate void GemOperationHandler(int row, int column, GemOperation operation);
     public event GemOperationHandler GemOperationEvent;
@@ -39,6 +41,19 @@ public class GemController : MonoBehaviour
         get
         {
             return _row;
+        }
+    }
+
+    public bool IsTagged
+    {
+        get
+        {
+            return _isTagged;
+        }
+
+        set
+        {
+            _isTagged = value;
         }
     }
 
