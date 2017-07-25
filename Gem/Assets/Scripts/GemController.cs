@@ -34,6 +34,10 @@ public class GemController : MonoBehaviour
         {
             return _column;
         }
+        set
+        {
+            _column = value;
+        }
     }
 
     public int Row
@@ -41,6 +45,10 @@ public class GemController : MonoBehaviour
         get
         {
             return _row;
+        }
+        set
+        {
+            _row = value;
         }
     }
 
@@ -154,7 +162,7 @@ public class GemController : MonoBehaviour
     }
     private void OnMouseDown()
     {
-        _renderer.material.color = Color.red;
+        //_renderer.material.color = Color.red;
 
         if (GemOperationEvent != null)
         {
@@ -163,10 +171,21 @@ public class GemController : MonoBehaviour
     }
     private void OnMouseUp()
     {
-        _renderer.material.color = Color.white;
+        //_renderer.material.color = Color.white;
         if (GemOperationEvent != null)
         {
             GemOperationEvent(_row, _column, GemOperation.TouchUp);
+        }
+    }
+    public void SetIsSelected(bool isSelected)
+    {
+        if (isSelected)
+        {
+            _renderer.material.color = Color.black;
+        }
+        else
+        {
+            _renderer.material.color = Color.white;
         }
     }
 }

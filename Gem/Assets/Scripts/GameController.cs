@@ -151,8 +151,15 @@ public class GameController : MonoBehaviour
         mySequence.Join(_secondSelectedGemControler.transform.DOLocalMove(_firstSelectedGemControler.transform.localPosition, moveDuration));
         mySequence.AppendCallback(() => {
             _isSwappingDone = true;
-            _currentGemControllerMatrix[_firstSelectedGemControler.Row,_firstSelectedGemControler.Column] = _secondSelectedGemControler;
+            _currentGemControllerMatrix[_firstSelectedGemControler.Row, _firstSelectedGemControler.Column] = _secondSelectedGemControler;
             _currentGemControllerMatrix[_secondSelectedGemControler.Row,_secondSelectedGemControler.Column] = _firstSelectedGemControler;
+            var row = _firstSelectedGemControler.Row;
+            var column = _firstSelectedGemControler.Column;
+            _firstSelectedGemControler.Row = _secondSelectedGemControler.Row;
+            _firstSelectedGemControler.Column = _secondSelectedGemControler.Column;
+            _secondSelectedGemControler.Row = row;
+            _secondSelectedGemControler.Column = column;
+
         });
     }
 
@@ -283,6 +290,13 @@ public class GameController : MonoBehaviour
             // Do nothing
         }
 
+        public override void Enter()
+        {
+            base.Enter();
+            _controller._firstSelectedGemControler = null;
+            _controller._secondSelectedGemControler = null;
+        }
+
         public override void OnGemOperation(int row, int column, GemOperation operation)
         {
             base.OnGemOperation(row, column, operation);
@@ -300,6 +314,12 @@ public class GameController : MonoBehaviour
             // Do nothing
         }
 
+        public override void Enter()
+        {
+            base.Enter();
+            _controller._firstSelectedGemControler.SetIsSelected(true);
+        }
+
         public override void OnGemOperation(int row, int column, GemOperation operation)
         {
             base.OnGemOperation(row, column, operation);
@@ -315,7 +335,9 @@ public class GameController : MonoBehaviour
                 }
                 else
                 {
+                    _controller._firstSelectedGemControler.SetIsSelected(false);
                     _controller._firstSelectedGemControler = selectedGemControler;
+                    _controller._firstSelectedGemControler.SetIsSelected(true);
                 }
             }
         }
@@ -330,6 +352,7 @@ public class GameController : MonoBehaviour
         public override void Enter()
         {
             base.Enter();
+            _controller._secondSelectedGemControler.SetIsSelected(true);
             _controller.ChangeToState(GameBoardState.Swap);
             //_controller.SwapTwoGems();
         }
@@ -372,6 +395,13 @@ public class GameController : MonoBehaviour
         public ReverseSwapState(GameController controller) : base(controller)
         {
             // Do nothing
+        }
+
+        public override void Enter()
+        {
+            base.Enter();
+            _controller._firstSelectedGemControler.SetIsSelected(false);
+            _controller._secondSelectedGemControler.SetIsSelected(false);
         }
 
         public override void Update()
