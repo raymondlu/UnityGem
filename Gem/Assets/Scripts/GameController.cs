@@ -17,17 +17,17 @@ public class GameController : MonoBehaviour
     public List<Sprite> gemSprites;
     public GameObject board;
     public GameObject scoreText;
-	public GameObject levelText;
+    public GameObject levelText;
 
-	private GemController[,] _currentGemControllerMatrix;
+    private GemController[,] _currentGemControllerMatrix;
 
     private GameBoardState _currentGameBoardState = GameBoardState.Idle;
 
-    private Dictionary<GameBoardState,GameControllerStateBase> _states = new Dictionary<GameBoardState, GameControllerStateBase>();
+    private Dictionary<GameBoardState, GameControllerStateBase> _states = new Dictionary<GameBoardState, GameControllerStateBase>();
     private bool _isSwappingDone = false;
-    
+
     private bool shouldUpdate = false;
-	private static GameController gameController;
+    private static GameController gameController;
 
     private GemController _firstSelectedGemControler;
     private GemController _secondSelectedGemControler;
@@ -63,28 +63,28 @@ public class GameController : MonoBehaviour
     // protected mono methods
     //--------------------------------------------------------------------------
     protected void Awake()
-	{
-		gameController = this;
-	}
-	
-	protected void OnDestroy()
-	{
-		if(gameController != null)
-		{
+    {
+        gameController = this;
+    }
+
+    protected void OnDestroy()
+    {
+        if (gameController != null)
+        {
             gameController.DestroyStateHandlers();
             gameController = null;
-		}
-	}
-	
-	protected void OnDisable()
-	{
-	}
-	
-	protected void OnEnable()
-	{
-	}
-	
-	protected void Start()
+        }
+    }
+
+    protected void OnDisable()
+    {
+    }
+
+    protected void OnEnable()
+    {
+    }
+
+    protected void Start()
     {
         shouldUpdate = true;
 
@@ -132,6 +132,7 @@ public class GameController : MonoBehaviour
         _states.Add(GameBoardState.Swap, new SwapState(this));
         _states.Add(GameBoardState.ReverseSwap, new ReverseSwapState(this));
         _states.Add(GameBoardState.DestroyGem, new DestroyGemState(this));
+        _states.Add(GameBoardState.SpawnGem, new SpawnGemState(this));
     }
 
     private void DestroyStateHandlers()
@@ -153,7 +154,7 @@ public class GameController : MonoBehaviour
         mySequence.AppendCallback(() => {
             _isSwappingDone = true;
             _currentGemControllerMatrix[_firstSelectedGemControler.Row, _firstSelectedGemControler.Column] = _secondSelectedGemControler;
-            _currentGemControllerMatrix[_secondSelectedGemControler.Row,_secondSelectedGemControler.Column] = _firstSelectedGemControler;
+            _currentGemControllerMatrix[_secondSelectedGemControler.Row, _secondSelectedGemControler.Column] = _firstSelectedGemControler;
             var row = _firstSelectedGemControler.Row;
             var column = _firstSelectedGemControler.Column;
             _firstSelectedGemControler.Row = _secondSelectedGemControler.Row;
@@ -190,7 +191,7 @@ public class GameController : MonoBehaviour
             // Left
             for (int col = gem.Column - 1; col >= minColumnIndex; col--)
             {
-                var leftGem = _currentGemControllerMatrix[gem.Row,col];
+                var leftGem = _currentGemControllerMatrix[gem.Row, col];
                 var currentGem = _currentGemControllerMatrix[gem.Row, leftMostColumnIndex];
                 if (GemController.IsMatched(leftGem, currentGem))
                 {
@@ -271,32 +272,37 @@ public class GameController : MonoBehaviour
         return hasMatchedGems;
     }
 
-    protected void Update(){
-		if (shouldUpdate) {
-			shouldUpdate = false;
-			UpdateGameStatus ();
-		}
+    protected void Update()
+    {
+        if (shouldUpdate)
+        {
+            shouldUpdate = false;
+            UpdateGameStatus();
+        }
 
         if (_states != null && _states[_currentGameBoardState] != null)
         {
             _states[_currentGameBoardState].Update();
         }
-	}
+    }
 
-	//--------------------------------------------------------------------------
-	// private methods
-	//--------------------------------------------------------------------------
-	private void UpdateGameStatus(){
-		Text text = scoreText.GetComponent<Text>();
-		if (text != null) {
-			text.text = GameState.CurrentScore.ToString();
-		}
+    //--------------------------------------------------------------------------
+    // private methods
+    //--------------------------------------------------------------------------
+    private void UpdateGameStatus()
+    {
+        Text text = scoreText.GetComponent<Text>();
+        if (text != null)
+        {
+            text.text = GameState.CurrentScore.ToString();
+        }
 
-		text = levelText.GetComponent<Text>();
-		if (text != null) {
-			text.text = GameState.CurrentLevel.ToString();
-		}
-	}
+        text = levelText.GetComponent<Text>();
+        if (text != null)
+        {
+            text.text = GameState.CurrentLevel.ToString();
+        }
+    }
     private GemController SpawnGem(int row, int column, bool shouldPreventRepeating)
     {
         var candidateGemTypes = new List<GemType>();
@@ -308,7 +314,7 @@ public class GameController : MonoBehaviour
         if (shouldPreventRepeating)
         {
             var leftRow = row - 1;
-            if (leftRow >= 0 && _currentGemControllerMatrix[leftRow,column] != null)
+            if (leftRow >= 0 && _currentGemControllerMatrix[leftRow, column] != null)
             {
                 candidateGemTypes.Remove(_currentGemControllerMatrix[leftRow, column].Type);
             }
@@ -346,13 +352,13 @@ public class GameController : MonoBehaviour
         }
     }
 
-	//--------------------------------------------------------------------------
-	// public methods
-	//--------------------------------------------------------------------------
-	public void ShowMenu()
-	{
-		MainController.SwitchScene ("MenuScene");
-	}
+    //--------------------------------------------------------------------------
+    // public methods
+    //--------------------------------------------------------------------------
+    public void ShowMenu()
+    {
+        MainController.SwitchScene("MenuScene");
+    }
     public void OnGemOperation(int row, int column, GemOperation operation)
     {
         //Debug.Log(string.Format("Gem:{0},{1} is {2}.", row, column, operation.ToString()));
@@ -523,6 +529,8 @@ public class GameController : MonoBehaviour
         public override void Enter()
         {
             base.Enter();
+            _controller._firstSelectedGemControler.SetIsSelected(false);
+            _controller._secondSelectedGemControler.SetIsSelected(false);
             _time = 0;
         }
 
@@ -532,7 +540,7 @@ public class GameController : MonoBehaviour
             _time += Time.deltaTime;
             if (_time >= _duration)
             {
-                _controller.ChangeToState(GameBoardState.ReverseSwap);
+                _controller.ChangeToState(GameBoardState.SpawnGem);
             }
         }
 
@@ -546,10 +554,41 @@ public class GameController : MonoBehaviour
                     if (current.IsTagged)
                     {
                         current.IsTagged = false;
+                        _controller.DestroyGem(row, col);
                     }
                 }
             }
             base.Exit();
+        }
+    }
+
+    class SpawnGemState : GameControllerStateBase
+    {
+        public SpawnGemState(GameController controller) : base(controller)
+        {
+            // Do nothing
+        }
+
+        public override void Enter()
+        {
+            base.Enter();
+            for (int row = 0; row < GameConfig.Instance.gemRow; row++)
+            {
+                for (int col = 0; col < GameConfig.Instance.gemColumn; col++)
+                {
+                    var current = _controller._currentGemControllerMatrix[row, col];
+                    if (current == null)
+                    {
+                        _controller.SpawnGem(row, col, false);
+                    }
+                }
+            }
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            _controller.ChangeToState(GameBoardState.Idle);
         }
     }
 }
