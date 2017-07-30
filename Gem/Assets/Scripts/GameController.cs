@@ -132,7 +132,6 @@ public class GameController : MonoBehaviour
         _states.Add(GameBoardState.Swap, new SwapState(this));
         _states.Add(GameBoardState.ReverseSwap, new ReverseSwapState(this));
         _states.Add(GameBoardState.DestroyGem, new DestroyGemState(this));
-        _states.Add(GameBoardState.SpawnGem, new SpawnGemState(this));
     }
 
     private void DestroyStateHandlers()
@@ -524,8 +523,6 @@ public class GameController : MonoBehaviour
         public override void Enter()
         {
             base.Enter();
-            _controller._firstSelectedGemControler.SetIsSelected(false);
-            _controller._secondSelectedGemControler.SetIsSelected(false);
             _time = 0;
         }
 
@@ -535,7 +532,7 @@ public class GameController : MonoBehaviour
             _time += Time.deltaTime;
             if (_time >= _duration)
             {
-                _controller.ChangeToState(GameBoardState.SpawnGem);
+                _controller.ChangeToState(GameBoardState.ReverseSwap);
             }
         }
 
@@ -549,41 +546,10 @@ public class GameController : MonoBehaviour
                     if (current.IsTagged)
                     {
                         current.IsTagged = false;
-                        _controller.DestroyGem(row, col);
                     }
                 }
             }
             base.Exit();
-        }
-    }
-
-    class SpawnGemState : GameControllerStateBase
-    {
-        public SpawnGemState(GameController controller) : base(controller)
-        {
-            // Do nothing
-        }
-
-        public override void Enter()
-        {
-            base.Enter();
-            for (int row = 0; row < GameConfig.Instance.gemRow; row++)
-            {
-                for (int col = 0; col < GameConfig.Instance.gemColumn; col++)
-                {
-                    var current = _controller._currentGemControllerMatrix[row, col];
-                    if (current == null)
-                    {
-                        _controller.SpawnGem(row, col, false);
-                    }
-                }
-            }
-        }
-
-        public override void Update()
-        {
-            base.Update();
-            _controller.ChangeToState(GameBoardState.Idle);
         }
     }
 }
