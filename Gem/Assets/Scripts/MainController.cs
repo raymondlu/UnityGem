@@ -60,7 +60,9 @@ public class MainController : MonoBehaviour
 
 		nextSceneName = "MenuScene";
 		sceneState = SceneState.Reset;
-		//GetComponent<Camera>().orthographicSize = Screen.height/2;
+        //GetComponent<Camera>().orthographicSize = Screen.height/2;
+
+        Random.InitState(System.DateTime.Now.Millisecond);
 	}
 	
 	protected void OnDestroy()

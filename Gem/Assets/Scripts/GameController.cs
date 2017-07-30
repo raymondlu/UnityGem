@@ -524,17 +524,6 @@ public class GameController : MonoBehaviour
         {
             base.Enter();
             _time = 0;
-            for (int row = 0; row < GameConfig.Instance.gemRow; row++)
-            {
-                for (int col = 0; col < GameConfig.Instance.gemColumn; col++)
-                {
-                    var current = _controller._currentGemControllerMatrix[row, col];
-                    if (current.IsTagged)
-                    {
-                        current.SetIsSelected(true);
-                    }
-                }
-            }
         }
 
         public override void Update()
@@ -557,7 +546,6 @@ public class GameController : MonoBehaviour
                     if (current.IsTagged)
                     {
                         current.IsTagged = false;
-                        current.SetIsSelected(false);
                     }
                 }
             }

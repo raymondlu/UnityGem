@@ -62,6 +62,15 @@ public class GemController : MonoBehaviour
         set
         {
             _isTagged = value;
+
+            if (_isTagged)
+            {
+                _renderer.material.color = Color.blue;
+            }
+            else
+            {
+                _renderer.material.color = Color.white;
+            }
         }
     }
 
@@ -200,7 +209,7 @@ public class GemController : MonoBehaviour
     {
         if (isSelected)
         {
-            _renderer.material.color = Color.black;
+            _renderer.material.color = Color.yellow;
         }
         else
         {
