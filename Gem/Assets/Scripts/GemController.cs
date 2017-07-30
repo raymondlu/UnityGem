@@ -90,6 +90,25 @@ public class GemController : MonoBehaviour
         return isAdjacent;
     }
 
+    public static bool IsMatched(GemController first, GemController second)
+    {
+        bool isMatched = false;
+
+        do
+        {
+            if (first.Type == second.Type)
+            {
+                isMatched = true;
+                break;
+            }
+
+            // TODO:
+            // Super Gem
+        } while (false);
+
+        return isMatched;
+    }
+
     public static GemController CreateGemObject(int row, int column, GemType type, Sprite sprite)
     {
         foreach(var controller in _gemControllers)

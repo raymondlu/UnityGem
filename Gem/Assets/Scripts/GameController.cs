@@ -131,6 +131,7 @@ public class GameController : MonoBehaviour
         _states.Add(GameBoardState.SecondSelection, new SecondSelectionState(this));
         _states.Add(GameBoardState.Swap, new SwapState(this));
         _states.Add(GameBoardState.ReverseSwap, new ReverseSwapState(this));
+        _states.Add(GameBoardState.DestroyGem, new DestroyGemState(this));
     }
 
     private void DestroyStateHandlers()
@@ -165,13 +166,109 @@ public class GameController : MonoBehaviour
 
     private bool CalculateSwappedGems()
     {
-        /*var dirctions = new Dictionary<int, int> {
-            {-1, 0},// left
-            {1, 0},// right
-            {0, -1},// up
-            {0, 1},// down
-        };*/
-        return false;
+        //var dirctions = (
+        //    left:{-1, 0},// left
+        //    right: {1, 0},// right
+        //    up: {0, -1},// up
+        //    down: {0, 1},// down
+        //);
+        var minRowIndex = 0;
+        var maxRowIndex = GameConfig.Instance.gemRow - 1;
+        var minColumnIndex = 0;
+        var maxColumnIndex = GameConfig.Instance.gemColumn - 1;
+
+        var gemToCheckList = new List<GemController>();
+        gemToCheckList.Add(_firstSelectedGemControler);
+        gemToCheckList.Add(_secondSelectedGemControler);
+
+        var hasMatchedGems = false;
+        foreach (var gem in gemToCheckList)
+        {
+            // Horizontal
+            var leftMostColumnIndex = gem.Column;
+            var rightMostColumnIndex = gem.Column;
+            // Left
+            for (int col = gem.Column - 1; col >= minColumnIndex; col--)
+            {
+                var leftGem = _currentGemControllerMatrix[gem.Row,col];
+                var currentGem = _currentGemControllerMatrix[gem.Row, leftMostColumnIndex];
+                if (GemController.IsMatched(leftGem, currentGem))
+                {
+                    leftMostColumnIndex = col;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            // Right
+            for (int col = gem.Column + 1; col <= maxColumnIndex; col++)
+            {
+                var rightGem = _currentGemControllerMatrix[gem.Row, col];
+                var currentGem = _currentGemControllerMatrix[gem.Row, rightMostColumnIndex];
+                if (GemController.IsMatched(rightGem, currentGem))
+                {
+                    rightMostColumnIndex = col;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            // Vertical
+            var upperMostRowIndex = gem.Row;
+            var lowestRowIndex = gem.Row;
+            // Up
+            for (int row = gem.Row - 1; row >= minRowIndex; row--)
+            {
+                var upperGem = _currentGemControllerMatrix[row, gem.Column];
+                var currentGem = _currentGemControllerMatrix[upperMostRowIndex, gem.Column];
+                if (GemController.IsMatched(upperGem, currentGem))
+                {
+                    upperMostRowIndex = row;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            // Low
+            for (int row = gem.Row + 1; row <= maxRowIndex; row++)
+            {
+                var lowerGem = _currentGemControllerMatrix[row, gem.Column];
+                var currentGem = _currentGemControllerMatrix[lowestRowIndex, gem.Column];
+                if (GemController.IsMatched(lowerGem, currentGem))
+                {
+                    lowestRowIndex = row;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (rightMostColumnIndex - leftMostColumnIndex >= 2)
+            {
+                hasMatchedGems = true;
+                for (int i = leftMostColumnIndex; i <= rightMostColumnIndex; i++)
+                {
+                    var current = _currentGemControllerMatrix[gem.Row, i];
+                    current.IsTagged = true;
+                }
+            }
+            if (lowestRowIndex - upperMostRowIndex >= 2)
+            {
+                hasMatchedGems = true;
+                for (int i = upperMostRowIndex; i <= lowestRowIndex; i++)
+                {
+                    var current = _currentGemControllerMatrix[i, gem.Column];
+                    current.IsTagged = true;
+                }
+            }
+        }
+
+        return hasMatchedGems;
     }
 
     protected void Update(){
@@ -380,7 +477,6 @@ public class GameController : MonoBehaviour
                 if (!hasMatchedGames)
                 {
                     _controller.ChangeToState(GameBoardState.ReverseSwap);
-                    _controller.SwapTwoGems();
                 }
                 else
                 {
@@ -400,6 +496,7 @@ public class GameController : MonoBehaviour
         public override void Enter()
         {
             base.Enter();
+            _controller.SwapTwoGems();
             _controller._firstSelectedGemControler.SetIsSelected(false);
             _controller._secondSelectedGemControler.SetIsSelected(false);
         }
@@ -411,6 +508,60 @@ public class GameController : MonoBehaviour
             {
                 _controller.ChangeToState(GameBoardState.Idle);
             }
+        }
+    }
+
+    class DestroyGemState : GameControllerStateBase
+    {
+        private float _time = 0;
+        private float _duration = 0.5f;
+        public DestroyGemState(GameController controller) : base(controller)
+        {
+
+        }
+
+        public override void Enter()
+        {
+            base.Enter();
+            _time = 0;
+            for (int row = 0; row < GameConfig.Instance.gemRow; row++)
+            {
+                for (int col = 0; col < GameConfig.Instance.gemColumn; col++)
+                {
+                    var current = _controller._currentGemControllerMatrix[row, col];
+                    if (current.IsTagged)
+                    {
+                        current.SetIsSelected(true);
+                    }
+                }
+            }
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            _time += Time.deltaTime;
+            if (_time >= _duration)
+            {
+                _controller.ChangeToState(GameBoardState.ReverseSwap);
+            }
+        }
+
+        public override void Exit()
+        {
+            for (int row = 0; row < GameConfig.Instance.gemRow; row++)
+            {
+                for (int col = 0; col < GameConfig.Instance.gemColumn; col++)
+                {
+                    var current = _controller._currentGemControllerMatrix[row, col];
+                    if (current.IsTagged)
+                    {
+                        current.IsTagged = false;
+                        current.SetIsSelected(false);
+                    }
+                }
+            }
+            base.Exit();
         }
     }
 }
